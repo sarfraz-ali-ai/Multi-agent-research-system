@@ -1,43 +1,25 @@
-# Core LLM + LangChain ecosystem
-langchain>=0.2.0
-langchain-core>=0.2.0
-langchain-community>=0.2.0
-langchain-openai>=0.1.0
+# ── Core LLM + LangChain ecosystem ──────────────────────────────────────────
+# langchain>=1.0 is required for `from langchain.agents import create_agent`
+langchain>=1.0.0
+langchain-core>=1.0.0
+langchain-google-genai>=2.0.0
 
-# OpenAI
-openai>=1.30.0
+# ── Google Gemini (used in agents.py via ChatGoogleGenAI / ChatGoogleGenerativeAI)
+google-generativeai>=0.8.0
 
-# Tavily Search Tool
-tavily-python>=0.3.0
+# ── Tavily Search Tool (used in tools.py) ───────────────────────────────────
+tavily-python>=0.5.0
 
-# Web scraping
+# ── Web scraping (used in tools.py: requests + BeautifulSoup) ───────────────
 beautifulsoup4>=4.12.0
 requests>=2.31.0
 lxml>=5.0.0
 
-# Environment variables
+# ── Environment variables (used in agents.py / tools.py) ────────────────────
 python-dotenv>=1.0.0
 
-# Async support (important for agents/tools)
-aiohttp>=3.9.0
-
-# Data handling (optional but useful in pipelines)
-pandas>=2.0.0
-
-# Token counting / text utils
-tiktoken>=0.6.0
-
-# Logging / debugging (optional but recommended)
+# ── Console output (used in tools.py: `from rich import print`) ─────────────
 rich>=13.7.0
 
-# Retry + robustness
-tenacity>=8.2.0
-
-# JSON handling improvements
-orjson>=3.9.0
-
-# Typing support (helps in bigger projects)
-pydantic>=2.5.0
-
-# Optional (for advanced parsing / HTML cleanup)
-html5lib>=1.1
+# ── Streamlit UI (used in app.py) ───────────────────────────────────────────
+streamlit>=1.40.0

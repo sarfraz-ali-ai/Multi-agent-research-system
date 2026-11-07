@@ -1,75 +1,36 @@
-from agents import build_reader_agent , build_search_agent , writer_chain , critic_chain
+from agents import writer_chain, critic_chain
+from tools import web_search, scrape_url
+from utils import extract_text, extract_urls
 
-def run_research_pipeline(topic : str) -> dict:
 
-    state = {}
+def run_research_pipeline(topic: str) -> dict:
+    state = {"topic": topic}
 
-    #search agent working 
-    print("\n"+" ="*50)
-    print("step 1 - search agent is working ...")
-    print("="*50)
+    print("=" * 50, "\nstep 1 - searching ...")
+    raw = web_search.invoke({"query": f"Find recent, reliable, detailed information about: {topic}"})
+    state["search_results"] = raw
+    state["sources"] = extract_urls(raw)[:5]
+    print(f"found {len(state['sources'])} sources")
 
-    search_agent = build_search_agent()
-    search_result = search_agent.invoke({
-        "messages" : [("user", f"Find recent, reliable and detailed information about: {topic}")]
-    })
-    state["search_results"] = search_result['messages'][-1].content
+    print("=" * 50, "\nstep 2 - scraping ...")
+    parts = []
+    for url in state["sources"][:3]:
+        print(f"scraping {url}")
+        parts.append(f"=== {url} ===\n{scrape_url.invoke({'url': url})}")
+    state["scraped_content"] = "\n\n".join(parts)[:6000]
 
-    print("\n search result ",state['search_results'])
+    print("=" * 50, "\nstep 3 - writing ...")
+    research = f"SEARCH:\n{raw}\n\nSCRAPED:\n{state['scraped_content']}"
+    state["report"] = extract_text(writer_chain.invoke({"topic": topic, "research": research}))
 
-    #step 2 - reader agent 
-    print("\n"+" ="*50)
-    print("step 2 - Reader agent is scraping top resources ...")
-    print("="*50)
+    print("=" * 50, "\nstep 4 - critiquing ...")
+    state["critique"] = critic_chain.invoke({"report": state["report"]})
+    print(state["critique"])
 
-    reader_agent = build_reader_agent()
-    reader_result = reader_agent.invoke({
-        "messages": [("user",
-            f"Based on the following search results about '{topic}', "
-            f"pick the most relevant URL and scrape it for deeper content.\n\n"
-            f"Search Results:\n{state['search_results'][:800]}"
-        )]
-    })
-
-    state['scraped_content'] = reader_result['messages'][-1].content
-
-    print("\nscraped content: \n", state['scraped_content'])
-
-    #step 3 - writer chain 
-
-    print("\n"+" ="*50)
-    print("step 3 - Writer is drafting the report ...")
-    print("="*50)
-
-    research_combined = (
-        f"SEARCH RESULTS : \n {state['search_results']} \n\n"
-        f"DETAILED SCRAPED CONTENT : \n {state['scraped_content']}"
-    )
-
-    state["report"] = writer_chain.invoke({
-        "topic" : topic,
-        "research" : research_combined
-    })
-
-    print("\n Final Report\n",state['report'])
-
-    #critic report 
-
-    print("\n"+" ="*50)
-    print("step 4 - critic is reviewing the report ")
-    print("="*50)
-
-    state["feedback"] = critic_chain.invoke({
-        "report":state['report']
-    })
-
-    print("\n critic report \n", state['feedback'])
-
+    if state["sources"]:
+        state["report"] += "\n\n### Sources\n" + "\n".join(f"- {u}" for u in state["sources"])
     return state
 
 
-
 if __name__ == "__main__":
-    topic = input("\n Enter a research topic : ")
-    run_research_pipeline(topic)
-
+    run_research_pipeline(input("\nTopic: "))
